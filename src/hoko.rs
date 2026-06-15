@@ -46,9 +46,14 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
 
             // Konverti al signo (nur literojn).
             if let Some(ch) = vk_al_signo(vk) {
-                if let Some(out) = prilabori_enigon(ch) {
-                    sendi_signon(out);
-                    return LRESULT(1); // Interkapti la originalan klavopremon.
+                match prilabori_enigon(ch) {
+                    Some(out) => {
+                        sendi_signon(out);
+                        return LRESULT(1); // Interkapti la originalan klavopremon.
+                    }
+                    None => {
+                        return LRESULT(1);
+                    }
                 }
             }
         }
