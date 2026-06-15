@@ -44,6 +44,12 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
                 return CallNextHookEx(None, n_kodo, w_param, l_param);
             }
 
+            // trakti klavojn nur en Esperanta reĝimo.
+            if !estas_esperanta() {
+                // Ne‑Esperanta reĝimo: lasi la klavojn normale pasi al la sistemo.
+                return CallNextHookEx(None, n_kodo, w_param, l_param);
+            }
+
             // Konverti al signo (nur literojn).
             if let Some(ch) = vk_al_signo(vk) {
                 match prilabori_enigon(ch) {
