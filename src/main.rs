@@ -1,3 +1,5 @@
+mod detekti;
+
 fn main() {
-    println!("Hello, world!");
+    
 }
