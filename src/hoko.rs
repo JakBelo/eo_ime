@@ -13,7 +13,10 @@ use windows::Win32::{
     },
 };
 
-use crate::{detekti::estas_esperanta, esperanto::anstatauxigi};
+use crate::{
+    detekti::{estas_esperanta, havas_modifilon},
+    esperanto::anstatauxigi,
+};
 
 static STATO: Mutex<String> = Mutex::new(String::new());
 
@@ -47,6 +50,11 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
             // trakti klavojn nur en Esperanta reĝimo.
             if !estas_esperanta() {
                 // Ne‑Esperanta reĝimo: lasi la klavojn normale pasi al la sistemo.
+                return CallNextHookEx(None, n_kodo, w_param, l_param);
+            }
+
+            // Kiam modifa klavo estas premita, permesu ĉiujn kombinojn.
+            if havas_modifilon() {
                 return CallNextHookEx(None, n_kodo, w_param, l_param);
             }
 
