@@ -36,7 +36,7 @@ pub fn anstatauxigi(c: char, stato: &mut String) -> Option<char> {
                     // La dua estas prefikso, do konservu ĝin en la stato.
                 } else {
                     // La dua ankaŭ ne estas prefikso, do elsendu ĝin rekte.
-                    let dua = stato.remove(0);
+                    let _dua = stato.remove(0);
                 }
                 Some(unua)
             }
