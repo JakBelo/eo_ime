@@ -2,7 +2,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     DispatchMessageW, GetMessageW, HHOOK, MSG, SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, WH_KEYBOARD_LL
 };
 
-use crate::{hoko::hoko_proc, pleto::krei_pleton};
+use crate::{hoko::hoko_proc, pleto::{krei_pleton, pritrakti_tray_eventojn}};
 
 mod detekti;
 mod esperanto;
@@ -20,9 +20,12 @@ fn main() {
         let mut msg = MSG::default();
 
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {
+            pritrakti_tray_eventojn();
+
             let _ = TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
+        
         //malinstali la hokon post la mesaĝa buklo.
         malinstali_hokon();
     }
@@ -44,8 +47,4 @@ pub fn malinstali_hokon() {
             HOKO = None;
         }
     }
-}
-
-pub fn pritrakti_tray_eventojn() {
-    
 }

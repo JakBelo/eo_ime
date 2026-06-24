@@ -8,7 +8,7 @@ use windows::Win32::{
             SendInput, VIRTUAL_KEY,
         },
         WindowsAndMessaging::{
-            CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, PostQuitMessage, WM_KEYDOWN,
+            CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN,
         },
     },
 };
@@ -38,10 +38,7 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
             let kmn = *(l_param.0 as *const KBDLLHOOKSTRUCT);
             // VK‑kodo.
             let vk = kmn.vkCode as u32;
-
-            if vk == 0x1B {
-                PostQuitMessage(0);
-            }
+            
             // Filtri for 231.
             if vk == 231 {
                 return CallNextHookEx(None, n_kodo, w_param, l_param);
