@@ -2,7 +2,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     DispatchMessageW, GetMessageW, HHOOK, MSG, SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, WH_KEYBOARD_LL
 };
 
-use crate::hoko::hoko_proc;
+use crate::{hoko::hoko_proc, pleto::krei_pleton};
 
 mod detekti;
 mod esperanto;
@@ -12,6 +12,8 @@ mod pleto;
 static mut HOKO: Option<HHOOK> = None;
 
 fn main() {
+    let _tray = krei_pleton();
+
     instali_hokon();
 
     unsafe {
@@ -42,4 +44,8 @@ pub fn malinstali_hokon() {
             HOKO = None;
         }
     }
+}
+
+pub fn pritrakti_tray_eventojn() {
+    
 }
