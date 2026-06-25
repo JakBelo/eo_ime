@@ -2,11 +2,6 @@ name: Eldono de EO IME
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'versia numero v0.1'
-        required: true
-        type: string
 
 jobs:
   build:
@@ -19,6 +14,13 @@ jobs:
       - name: Elpreni la kodon.
         uses: actions/checkout@v7
 
+      - name: Akiri versian numeron.
+        id: versio
+        shell: bash
+        run: |
+          # Eltiri versian numeron el Cargo.toml.
+          echo "version=$(grep '^versio' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')" >> $GITHUB_OUTPUT
+
       - name: Agordi Rust-on.
         uses: dtolnay/rust-toolchain@stable
 
@@ -30,14 +32,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: EO IME ${{ github.event.inputs.tag }}
-          tag_name: ${{ github.event.inputs.tag }}
+          name: EO IME ${{ steps.versio.outputs.versio }}
+          tag_name: ${{ steps.versio.outputs.versio }}
           files: target/release/eo_ime.exe
-          prerelease: true
+          prerelease: false
           body: |
             ## 🔧 修复更新
 
             - 修复启动时出现控制台黑窗口的问题
             - 现在程序完全在后台静默运行
             - 添加程序ico图标
-            - 
+            - 添加了应用的完整信息
+            - 添加了ci自动获取toml的版本信息
