@@ -1,1 +1,32 @@
+name: Eldono de EO IME
 
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Elpreni la kodon.
+        uses: actions/checkout@v7
+
+      - name: Agordi Rust-on.
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Konstrui eldonan version.
+        run: cargo build --release
+        env:
+          RUSTFLAGS: "-C lto=true"
+      
+      - name: Krei eldonon kaj alŝuti.
+        uses: softprops/action-gh-release@v3
+        with:
+          files: target/release/eo_ime.exe
+          body: |
+            ## 更新内容
+            - 请填写发布说明
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
