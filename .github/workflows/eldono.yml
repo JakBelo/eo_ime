@@ -32,8 +32,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: EO IME ${{ steps.versio.outputs.versio }}
-          tag_name: ${{ steps.versio.outputs.versio }}
+          name: EO IME v${{ steps.versio.outputs.versio }}
+          tag_name: v${{ steps.versio.outputs.versio }}
           files: target/release/eo_ime.exe
           prerelease: false
           body: |
