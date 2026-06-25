@@ -24,9 +24,18 @@ jobs:
       - name: Krei eldonon kaj alŝuti.
         uses: softprops/action-gh-release@v3
         with:
+          name: EO IME ${{ github.ref_name }}
           files: target/release/eo_ime.exe
+          prerelease: true
           body: |
-            ## 更新内容
-            - 请填写发布说明
+            ## 🎉 首个预览版发布
+
+            - 支持 x-system 世界语字母输入
+            - Windows 11 支持
+            - 轻量无依赖
+
+            ## 📦 下载
+
+            下载 `eo_ime.exe` 并运行。
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
