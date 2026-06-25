@@ -21,8 +21,6 @@ jobs:
 
       - name: Konstrui eldonan version.
         run: cargo build --release
-        env:
-          RUSTFLAGS: "-C lto=true"
       
       - name: Krei eldonon kaj alŝuti.
         uses: softprops/action-gh-release@v3
