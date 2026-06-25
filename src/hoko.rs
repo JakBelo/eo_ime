@@ -31,7 +31,9 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
     unsafe {
         // Trakti klavojn nur en Esperanta reĝimo.
         if estas_esperanta() {
-            if n_kodo == HC_ACTION as i32 && w_param.0 == WM_KEYDOWN as usize {
+            if n_kodo == HC_ACTION as i32 && w_param.0 == WM_KEYDOWN as usize
+                || w_param.0 == WM_KEYUP as usize
+            {
                 // Klavara malalt-nivela hoka strukturo.
                 let kmn = *(l_param.0 as *const KBDLLHOOKSTRUCT);
                 // VK‑kodo.
@@ -43,6 +45,7 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
                 }
                 // Ĝisdatigi_Shift-staton.
                 if vk == VK_LSHIFT.0 as u32 || vk == VK_RSHIFT.0 as u32 {
+                    println!("{}", w_param.0 as u32);
                     if w_param.0 as u32 == WM_KEYDOWN {
                         SHIFT_MALSUPREN.store(true, Ordering::Relaxed);
                     } else if w_param.0 as u32 == WM_KEYUP {
