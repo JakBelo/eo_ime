@@ -1,13 +1,10 @@
 use std::sync::Mutex;
 
 use windows::Win32::{
-    Foundation::{LPARAM, LRESULT, WPARAM},
-    UI::{
+    Foundation::{LPARAM, LRESULT, WPARAM}, UI::{
         Input::KeyboardAndMouse::{
-            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE,
-            SendInput, VIRTUAL_KEY,
-        },
-        WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN},
+            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY,
+        }, WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN},
     },
 };
 
@@ -60,7 +57,7 @@ fn vk_al_signo(vk: u32) -> Option<char> {
 }
 
 pub fn sendi_signon(s: char) {
-    let mut input = INPUT {
+    let mut enigo = INPUT {
         r#type: INPUT_KEYBOARD,
         Anonymous: INPUT_0 {
             ki: KEYBDINPUT {
@@ -74,10 +71,33 @@ pub fn sendi_signon(s: char) {
     };
 
     unsafe {
-        SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+        SendInput(&[enigo], std::mem::size_of::<INPUT>() as i32);
 
-        input.Anonymous.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-        SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+        enigo.Anonymous.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+        SendInput(&[enigo], std::mem::size_of::<INPUT>() as i32);
+    }
+}
+
+pub fn sendi_retropaŝon() {
+    let mut enigo = INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: VIRTUAL_KEY(0x08), // VK_RETROPAŜO.
+                wScan: 0,
+                dwFlags: KEYBD_EVENT_FLAGS(0),
+                time: 0,
+                dwExtraInfo: 0,
+            },
+        },
+    };
+
+    unsafe {
+        SendInput(&[enigo], std::mem::size_of::<INPUT>() as i32);
+
+        // klavo supren.
+        enigo.Anonymous.ki.dwFlags = KEYEVENTF_KEYUP;
+        SendInput(&[enigo], std::mem::size_of::<INPUT>() as i32);
     }
 }
 
@@ -106,6 +126,7 @@ fn trakti_klavon(s: char) -> Ago {
                 };
 
                 if let Some(s_eligo) = eligo {
+                    sendi_retropaŝon();
                     sendi_signon(s_eligo);
                     *lasto = None;
                     return Ago::Konsumi;
