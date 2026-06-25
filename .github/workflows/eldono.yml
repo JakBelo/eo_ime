@@ -24,6 +24,8 @@ jobs:
       
       - name: Krei eldonon kaj alŝuti.
         uses: softprops/action-gh-release@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           name: EO IME ${{ github.event.inputs.tag }}
           tag_name: ${{ github.event.inputs.tag }}
@@ -39,5 +41,3 @@ jobs:
             ## 📦 下载
 
             下载 `eo_ime.exe` 并运行。
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
