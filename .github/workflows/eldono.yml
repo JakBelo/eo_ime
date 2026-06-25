@@ -1,9 +1,12 @@
 name: Eldono de EO IME
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'versia numero v0.1'
+        required: true
+        type: string
 
 jobs:
   build:
