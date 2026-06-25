@@ -7,29 +7,20 @@ use windows::Win32::{
             INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE,
             SendInput, VIRTUAL_KEY,
         },
-        WindowsAndMessaging::{
-            CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN,
-        },
+        WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN},
     },
 };
 
 use crate::{
-    detekti::{estas_esperanta, havas_modifilon},
-    esperanto::anstatauxigi,
+    detekti::estas_esperanta,
 };
 
-static STATO: Mutex<String> = Mutex::new(String::new());
-
-fn prilabori_enigon(c: char) -> Option<char> {
-    let mut stato = STATO.lock().unwrap();
-
-    if estas_esperanta() {
-        anstatauxigi(c, &mut stato)
-    } else {
-        stato.clear();
-        Some(c)
-    }
+enum Ago {
+    Pasi,
+    Konsumi,
 }
+
+static LASTO: Mutex<Option<char>> = Mutex::new(None);
 
 pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
     unsafe {
@@ -38,32 +29,19 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
             let kmn = *(l_param.0 as *const KBDLLHOOKSTRUCT);
             // VK‑kodo.
             let vk = kmn.vkCode as u32;
-            
+
             // Filtri for 231.
             if vk == 231 {
                 return CallNextHookEx(None, n_kodo, w_param, l_param);
             }
 
             // trakti klavojn nur en Esperanta reĝimo.
-            if !estas_esperanta() {
-                // Ne‑Esperanta reĝimo: lasi la klavojn normale pasi al la sistemo.
-                return CallNextHookEx(None, n_kodo, w_param, l_param);
-            }
-
-            // Kiam modifa klavo estas premita, permesu ĉiujn kombinojn.
-            if havas_modifilon() {
-                return CallNextHookEx(None, n_kodo, w_param, l_param);
-            }
-
-            // Konverti al signo (nur literojn).
-            if let Some(ch) = vk_al_signo(vk) {
-                match prilabori_enigon(ch) {
-                    Some(out) => {
-                        sendi_signon(out);
-                        return LRESULT(1); // Interkapti la originalan klavopremon.
-                    }
-                    None => {
-                        return LRESULT(1);
+            if estas_esperanta() {
+                // Kontroli Esperantan prefikson sen malhelpi.
+                if let Some(s) = vk_al_signo(vk) {
+                    match trakti_klavon(s) {
+                        Ago::Pasi => return CallNextHookEx(None, n_kodo, w_param, l_param),
+                        Ago::Konsumi => return LRESULT(1),
                     }
                 }
             }
@@ -100,5 +78,48 @@ pub fn sendi_signon(s: char) {
 
         input.Anonymous.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
         SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+    }
+}
+
+fn trakti_klavon(s: char) -> Ago {
+    // Akiri la antaŭe konservitan signon.
+    let mut lasto = LASTO.lock().unwrap();
+
+    match s {
+        // Registri la prefiksan literon.
+        'c' | 'g' | 'h' | 'j' | 's' | 'u' => {
+            *lasto = Some(s);
+            Ago::Pasi
+        }
+
+        // Nur ĉe “x” okazas anstataŭigo.
+        'x' => {
+            if let Some(prefikso) = *lasto {
+                let eligo = match prefikso {
+                    'c' => Some('ĉ'),
+                    'g' => Some('ĝ'),
+                    'h' => Some('ĥ'),
+                    'j' => Some('ĵ'),
+                    's' => Some('ŝ'),
+                    'u' => Some('ŭ'),
+                    _ => None,
+                };
+
+                if let Some(s_eligo) = eligo {
+                    sendi_signon(s_eligo);
+                    *lasto = None;
+                    return Ago::Konsumi;
+                }
+            }
+
+            *lasto = None;
+            Ago::Pasi
+        }
+
+        // Aliaj signoj: forigi staton kaj pasi normale.
+        _ => {
+            *lasto = None;
+            Ago::Pasi
+        }
     }
 }

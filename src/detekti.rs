@@ -17,15 +17,3 @@ pub fn estas_esperanta() -> bool {
         lin_id == 67706880 // Esperanta lingvo-identigilo.
     }
 }
-
-// Kontroli ĉu modifa klavo estas premita.
-pub fn havas_modifilon() -> bool {
-    unsafe {
-        let ctrl = (GetKeyState(VK_CONTROL.0 as i32) & (0x8000u16 as i16)) != 0;
-        let alt  = (GetKeyState(VK_MENU.0 as i32)    & (0x8000u16 as i16)) != 0;
-        let lwin = (GetKeyState(VK_LWIN.0 as i32)    & (0x8000u16 as i16)) != 0;
-        let rwin = (GetKeyState(VK_RWIN.0 as i32)    & (0x8000u16 as i16)) != 0;
-        
-        ctrl || alt || lwin || rwin
-    }
-}
