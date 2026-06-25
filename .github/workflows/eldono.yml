@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: |
           # Eltiri versian numeron el Cargo.toml.
-          echo "version=$(grep '^versio' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')" >> $GITHUB_OUTPUT
+          echo "versio=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')" >> $GITHUB_OUTPUT
 
       - name: Agordi Rust-on.
         uses: dtolnay/rust-toolchain@stable
