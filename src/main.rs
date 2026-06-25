@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use windows::Win32::UI::WindowsAndMessaging::{
     DispatchMessageW, GetMessageW, HHOOK, MSG, SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, WH_KEYBOARD_LL
 };
