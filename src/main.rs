@@ -7,7 +7,6 @@ use windows::Win32::UI::WindowsAndMessaging::{
 use crate::{hoko::hoko_proc, pleto::{krei_pleton, pritrakti_tray_eventojn}};
 
 mod detekti;
-mod esperanto;
 mod hoko;
 mod pleto;
 

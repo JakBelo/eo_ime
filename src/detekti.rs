@@ -1,5 +1,5 @@
 use windows::Win32::UI::{
-    Input::KeyboardAndMouse::{GetKeyState, GetKeyboardLayout, VK_CONTROL, VK_LWIN, VK_MENU, VK_RWIN},
+    Input::KeyboardAndMouse::GetKeyboardLayout,
     WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId},
 };
 
