@@ -1,20 +1,22 @@
 use std::sync::Mutex;
 
 use windows::Win32::{
-    Foundation::{LPARAM, LRESULT, WPARAM}, UI::{
+    Foundation::{LPARAM, LRESULT, WPARAM},
+    UI::{
         Input::KeyboardAndMouse::{
-            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY,
-        }, WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN},
+            GetKeyState, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT,
+            KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY, VK_CAPITAL, VK_SHIFT,
+        },
+        WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN},
     },
 };
 
-use crate::{
-    detekti::estas_esperanta,
-};
+use crate::detekti::estas_esperanta;
 
 enum Ago {
     Pasi,
     Konsumi,
+    Ignori,
 }
 
 static LASTO: Mutex<Option<char>> = Mutex::new(None);
@@ -35,10 +37,11 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
             // trakti klavojn nur en Esperanta reĝimo.
             if estas_esperanta() {
                 // Kontroli Esperantan prefikson sen malhelpi.
-                if let Some(s) = vk_al_signo(vk) {
-                    match trakti_klavon(s) {
+                if let Some((s, ĉu_majuskle)) = vk_al_signo(vk) {
+                    match trakti_klavon(s, ĉu_majuskle) {
                         Ago::Pasi => return CallNextHookEx(None, n_kodo, w_param, l_param),
                         Ago::Konsumi => return LRESULT(1),
+                        Ago::Ignori => {},
                     }
                 }
             }
@@ -48,12 +51,17 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
     }
 }
 
-fn vk_al_signo(vk: u32) -> Option<char> {
-    let s = match vk {
+fn vk_al_signo(vk: u32) -> Option<(char, bool)> {
+    let shift = unsafe { GetKeyState(VK_SHIFT.0 as i32) } < 0;
+    let caps = unsafe { GetKeyState(VK_CAPITAL.0 as i32) & 1 } != 0;
+
+    let ĉu_majuskle = shift ^ caps;
+
+    let s: char = match vk {
         0x41..=0x5A => (vk as u8 as char).to_ascii_lowercase(), // A-Z
         _ => return None,
     };
-    Some(s)
+    Some((s, ĉu_majuskle))
 }
 
 pub fn sendi_signon(s: char) {
@@ -101,7 +109,7 @@ pub fn sendi_retropaŝon() {
     }
 }
 
-fn trakti_klavon(s: char) -> Ago {
+fn trakti_klavon(s: char, ĉu_majuskle: bool) -> Ago {
     // Akiri la antaŭe konservitan signon.
     let mut lasto = LASTO.lock().unwrap();
 
@@ -116,21 +124,19 @@ fn trakti_klavon(s: char) -> Ago {
         'x' => {
             if let Some(prefikso) = *lasto {
                 let eligo = match prefikso {
-                    'c' => Some('ĉ'),
-                    'g' => Some('ĝ'),
-                    'h' => Some('ĥ'),
-                    'j' => Some('ĵ'),
-                    's' => Some('ŝ'),
-                    'u' => Some('ŭ'),
-                    _ => None,
+                    'c' => if ĉu_majuskle { 'Ĉ' } else { 'ĉ' },
+                    'g' => if ĉu_majuskle { 'Ĝ' } else { 'ĝ' },
+                    'h' => if ĉu_majuskle { 'Ĥ' } else { 'ĥ' },
+                    'j' => if ĉu_majuskle { 'Ĵ' } else { 'ĵ' },
+                    's' => if ĉu_majuskle { 'Ŝ' } else { 'ŝ' },
+                    'u' => if ĉu_majuskle { 'Ŭ' } else { 'ŭ' },
+                    _ => return Ago::Ignori,
                 };
 
-                if let Some(s_eligo) = eligo {
-                    sendi_retropaŝon();
-                    sendi_signon(s_eligo);
-                    *lasto = None;
-                    return Ago::Konsumi;
-                }
+                sendi_retropaŝon();
+                sendi_signon(eligo);
+                *lasto = None;
+                return Ago::Konsumi;
             }
 
             *lasto = None;
