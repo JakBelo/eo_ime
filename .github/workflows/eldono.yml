@@ -26,6 +26,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: EO IME ${{ github.event.inputs.tag }}
+          tag_name: ${{ github.event.inputs.tag }}
           files: target/release/eo_ime.exe
           prerelease: true
           body: |
