@@ -86,7 +86,7 @@ pub fn malinstali_hokon() {
 fn certigi_unikan_instancon() -> bool {
     unsafe {
         // Uzi unikan nomon por identigi vian aplikaĵon.
-        let mutex_nomo = "Global\\MiaUnikaKlavaraHokoApoMutex\0";
+        let mutex_nomo = "Global\\{019f038e-90fe-729b-aaaf-9bb72e9a61f5}_UnikaKlavaraHokoApoMutex\0";
 
         // Konverti la ĉenon al larĝsigna tabelo (UTF‑16) por uzo en Win32 API.
         let mutex_nomo_u16: Vec<u16> = mutex_nomo.encode_utf16().collect();
