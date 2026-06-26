@@ -33,10 +33,11 @@ static CAPS_EN: AtomicBool = AtomicBool::new(false);
 pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
     unsafe {
         // Trakti klavojn nur en Esperanta reĝimo.
+        if n_kodo != HC_ACTION as i32 {
+            return CallNextHookEx(None, n_kodo, w_param, l_param);
+        }
+
         if estas_esperanta() {
-            if n_kodo != HC_ACTION as i32 {
-                return CallNextHookEx(None, n_kodo, w_param, l_param);
-            }
             const KLAVO_MALSUPREN: usize = WM_KEYDOWN as usize;
             const KLAVO_SUPREN: usize = WM_KEYUP as usize;
 
