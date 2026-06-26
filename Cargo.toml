@@ -1,6 +1,6 @@
 [package]
 name = "eo_ime"
-version = "0.1.31"
+version = "0.1.37"
 edition = "2024"
 
 [dependencies]

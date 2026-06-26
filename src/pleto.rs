@@ -37,7 +37,7 @@ fn akiri_ikonon() -> Icon {
 fn krei_menuon() -> Box<dyn ContextMenu> {
     let menuo = Menu::new();
 
-    let eliri = MenuItem::new("退出", true, None);
+    let eliri = MenuItem::new("eliri", true, None);
 
     menuo.append(&eliri).expect("Aldono de la menuero malsukcesis: la menu-tenilo eble estas nevalida aŭ la objekto jam estas liberigita.");
 

@@ -1,16 +1,16 @@
-use std::sync::{
-    Mutex,
-    atomic::{AtomicBool, Ordering},
+use std::{
+    sync::{
+        Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Instant,
 };
 
 use windows::Win32::{
-    Foundation::{LPARAM, LRESULT, WPARAM},
-    UI::{
+    Foundation::{LPARAM, LRESULT, WPARAM}, UI::{
         Input::KeyboardAndMouse::{
-            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP,
-            KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY, VK_CAPITAL, VK_LSHIFT, VK_RSHIFT,
-        },
-        WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP},
+            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY, VK_CAPITAL, VK_LSHIFT, VK_RSHIFT,
+        }, WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP},
     },
 };
 
@@ -22,7 +22,7 @@ enum Ago {
     Ignori,
 }
 
-static LASTO: Mutex<Option<char>> = Mutex::new(None);
+static LASTO: Mutex<Option<(char, bool, Instant)>> = Mutex::new(None);
 
 static SHIFT_MALSUPREN: AtomicBool = AtomicBool::new(false);
 static CAPS_EN: AtomicBool = AtomicBool::new(false);
@@ -31,63 +31,75 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
     unsafe {
         // Trakti klavojn nur en Esperanta reĝimo.
         if estas_esperanta() {
-            if n_kodo == HC_ACTION as i32 && w_param.0 == WM_KEYDOWN as usize
-                || w_param.0 == WM_KEYUP as usize
-            {
-                // Klavara malalt-nivela hoka strukturo.
-                let kmn = *(l_param.0 as *const KBDLLHOOKSTRUCT);
-                // VK‑kodo.
-                let vk = kmn.vkCode as u32;
+            if n_kodo != HC_ACTION as i32 {
+                return CallNextHookEx(None, n_kodo, w_param, l_param);
+            }
+            const KLAVO_MALSUPREN: usize = WM_KEYDOWN as usize;
+            const KLAVO_SUPREN: usize = WM_KEYUP as usize;
 
-                // Filtri for 231.
-                if vk == 231 {
-                    return CallNextHookEx(None, n_kodo, w_param, l_param);
-                }
-                // Ĝisdatigi_Shift-staton.
-                if vk == VK_LSHIFT.0 as u32 || vk == VK_RSHIFT.0 as u32 {
-                    println!("{}", w_param.0 as u32);
-                    if w_param.0 as u32 == WM_KEYDOWN {
+            // Klavara malalt-nivela hoka strukturo.
+            let kmn = *(l_param.0 as *const KBDLLHOOKSTRUCT);
+            // VK‑kodo.
+            let vk = kmn.vkCode as u32;
+
+            // Filtri for 231.
+            if vk == 231 {
+                return CallNextHookEx(None, n_kodo, w_param, l_param);
+            }
+
+            match w_param.0 {
+                KLAVO_MALSUPREN => {
+                    // Ĝisdatigi_Shift-staton.
+                    if vk == VK_LSHIFT.0 as u32 || vk == VK_RSHIFT.0 as u32 {
                         SHIFT_MALSUPREN.store(true, Ordering::Relaxed);
-                    } else if w_param.0 as u32 == WM_KEYUP {
-                        SHIFT_MALSUPREN.store(false, Ordering::Relaxed);
+                        return CallNextHookEx(None, n_kodo, w_param, l_param);
                     }
-                    return CallNextHookEx(None, n_kodo, w_param, l_param);
-                }
-                // Ĝisdatigi_Caps-staton.
-                if vk == VK_CAPITAL.0 as u32 && w_param.0 as u32 == WM_KEYDOWN {
-                    let nuna = CAPS_EN.load(Ordering::Relaxed);
-                    CAPS_EN.store(!nuna, Ordering::Relaxed);
-                }
+                    // Ĝisdatigi_Caps-staton.
+                    if vk == VK_CAPITAL.0 as u32 {
+                        let nuna = CAPS_EN.load(Ordering::Relaxed);
+                        CAPS_EN.store(!nuna, Ordering::Relaxed);
+                    }
 
-                // Trakti klavojn nur en Esperanta reĝimo.
-                if estas_esperanta() {
-                    // Kontroli Esperantan prefikson sen malhelpi.
-                    if let Some((s, ĉu_majuskle)) = vk_al_signo(vk) {
-                        match trakti_klavon(s, ĉu_majuskle) {
-                            Ago::Pasi => return CallNextHookEx(None, n_kodo, w_param, l_param),
-                            Ago::Konsumi => return LRESULT(1),
-                            Ago::Ignori => {}
+                    // Trakti klavojn nur en Esperanta reĝimo.
+                    if estas_esperanta() {
+                        // Kontroli Esperantan prefikson sen malhelpi.
+                        if let Some(s) = vk_al_signo(vk) {
+                            match trakti_klavon(s) {
+                                Ago::Pasi => {
+                                    return CallNextHookEx(None, n_kodo, w_param, l_param);
+                                }
+                                Ago::Konsumi => return LRESULT(1),
+                                Ago::Ignori => {}
+                            }
                         }
                     }
                 }
+                KLAVO_SUPREN => {
+                    // Ĝisdatigi_Shift-staton.
+                    if vk == VK_LSHIFT.0 as u32 || vk == VK_RSHIFT.0 as u32 {
+                        SHIFT_MALSUPREN.store(false, Ordering::Relaxed);
+                        return CallNextHookEx(None, n_kodo, w_param, l_param);
+                    }
+                }
+                _ => {}
+            }
+        } else {
+            // Se en alia lingvo lasto enhavas datumon, tiam forigu ĝin.
+            if let Ok(mut lasto) = LASTO.lock() {
+                *lasto = None;
             }
         }
+
         CallNextHookEx(None, n_kodo, w_param, l_param)
     }
 }
 
-fn vk_al_signo(vk: u32) -> Option<(char, bool)> {
-    // Legi_staton.
-    let shift = SHIFT_MALSUPREN.load(Ordering::Relaxed);
-    let caps = CAPS_EN.load(Ordering::Relaxed);
-
-    let ĉu_majuskle = shift ^ caps;
-
+fn vk_al_signo(vk: u32) -> Option<char> {
     let s: char = match vk {
         0x41..=0x5A => (vk as u8 as char).to_ascii_lowercase(), // A-Z
         _ => return None,
     };
-    Some((s, ĉu_majuskle))
+    Some(s)
 }
 
 pub fn sendi_signon(s: char) {
@@ -135,20 +147,32 @@ pub fn sendi_retropaŝon() {
     }
 }
 
-fn trakti_klavon(s: char, ĉu_majuskle: bool) -> Ago {
+fn trakti_klavon(s: char) -> Ago {
     // Akiri la antaŭe konservitan signon.
     let mut lasto = LASTO.lock().unwrap();
+    // Post ĉiu klavopremo, forigi lasto post 3 sekundoj da neaktiveco.
+    if let Some((_, _, tempo)) = *lasto {
+        if tempo.elapsed().as_secs() >= 3 {
+            *lasto = None;
+        }
+    }
 
     match s {
         // Registri la prefiksan literon.
         'c' | 'g' | 'h' | 'j' | 's' | 'u' => {
-            *lasto = Some(s);
+            // Legi_staton.
+            let shift = SHIFT_MALSUPREN.load(Ordering::Relaxed);
+            let caps = CAPS_EN.load(Ordering::Relaxed);
+
+            let ĉu_majuskle = shift ^ caps;
+
+            *lasto = Some((s, ĉu_majuskle, Instant::now()));
             Ago::Pasi
         }
 
         // Nur ĉe “x” okazas anstataŭigo.
         'x' => {
-            if let Some(prefikso) = *lasto {
+            if let Some((prefikso, ĉu_majuskle, _tempo)) = *lasto {
                 let eligo = match prefikso {
                     'c' => {
                         if ĉu_majuskle {
