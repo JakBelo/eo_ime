@@ -7,10 +7,13 @@ use std::{
 };
 
 use windows::Win32::{
-    Foundation::{LPARAM, LRESULT, WPARAM}, UI::{
+    Foundation::{LPARAM, LRESULT, WPARAM},
+    UI::{
         Input::KeyboardAndMouse::{
-            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY, VK_CAPITAL, VK_LSHIFT, VK_RSHIFT,
-        }, WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP},
+            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP,
+            KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY, VK_CAPITAL, VK_LSHIFT, VK_RSHIFT,
+        },
+        WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP},
     },
 };
 
@@ -84,6 +87,10 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
                 _ => {}
             }
         } else {
+            // Nur kiam la stato estas vera, agordi ĝin al falsa.
+            if SHIFT_MALSUPREN.load(Ordering::Relaxed) {
+                SHIFT_MALSUPREN.store(false, Ordering::Relaxed);
+            }
             // Se en alia lingvo lasto enhavas datumon, tiam forigu ĝin.
             if let Ok(mut lasto) = LASTO.lock() {
                 *lasto = None;
