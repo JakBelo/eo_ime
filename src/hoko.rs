@@ -7,13 +7,10 @@ use std::{
 };
 
 use windows::Win32::{
-    Foundation::{LPARAM, LRESULT, WPARAM},
-    UI::{
+    Foundation::{LPARAM, LRESULT, WPARAM}, UI::{
         Input::KeyboardAndMouse::{
-            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP,
-            KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY, VK_CAPITAL, VK_LSHIFT, VK_RSHIFT,
-        },
-        WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP},
+            GetKeyState, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, SendInput, VIRTUAL_KEY, VK_CAPITAL, VK_LSHIFT, VK_RSHIFT,
+        }, WindowsAndMessaging::{CallNextHookEx, HC_ACTION, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_KEYUP},
     },
 };
 
@@ -28,7 +25,6 @@ enum Ago {
 static LASTO: Mutex<Option<(char, bool, Instant)>> = Mutex::new(None);
 
 static SHIFT_MALSUPREN: AtomicBool = AtomicBool::new(false);
-static CAPS_EN: AtomicBool = AtomicBool::new(false);
 
 pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
     unsafe {
@@ -57,11 +53,6 @@ pub unsafe extern "system" fn hoko_proc(n_kodo: i32, w_param: WPARAM, l_param: L
                     if vk == VK_LSHIFT.0 as u32 || vk == VK_RSHIFT.0 as u32 {
                         SHIFT_MALSUPREN.store(true, Ordering::Relaxed);
                         return CallNextHookEx(None, n_kodo, w_param, l_param);
-                    }
-                    // Ĝisdatigi_Caps-staton.
-                    if vk == VK_CAPITAL.0 as u32 {
-                        let nuna = CAPS_EN.load(Ordering::Relaxed);
-                        CAPS_EN.store(!nuna, Ordering::Relaxed);
                     }
 
                     // Trakti klavojn nur en Esperanta reĝimo.
@@ -170,7 +161,8 @@ fn trakti_klavon(s: char) -> Ago {
         'c' | 'g' | 'h' | 'j' | 's' | 'u' => {
             // Legi_staton.
             let shift = SHIFT_MALSUPREN.load(Ordering::Relaxed);
-            let caps = CAPS_EN.load(Ordering::Relaxed);
+            // Realteme kontroli la staton de CapsLock.
+            let caps = unsafe { GetKeyState(VK_CAPITAL.0 as i32) & 0x0001 != 0 };
 
             let ĉu_majuskle = shift ^ caps;
 
